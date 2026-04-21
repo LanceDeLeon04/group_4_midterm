@@ -1,39 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Syne:wght@700;800;900&display=swap');
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { font-size: 16px; -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f0f2f7; color: #0f172a; line-height: 1.5; }
 
-body {
-  font-family: 'Plus Jakarta Sans', sans-serif;
-  background: #f0f2f7;
-  color: #0f172a;
-  line-height: 1.5;
-}
-
-/* Custom scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: #f1f5f9; }
 ::-webkit-scrollbar-thumb { background: #c7d2e0; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
-/* Leaflet popup font */
+/* Leaflet overrides — keep map BELOW dropdowns */
+.leaflet-pane          { z-index: 1 !important; }
+.leaflet-tile-pane     { z-index: 1 !important; }
+.leaflet-overlay-pane  { z-index: 2 !important; }
+.leaflet-marker-pane   { z-index: 3 !important; }
+.leaflet-tooltip-pane  { z-index: 4 !important; }
+.leaflet-popup-pane    { z-index: 5 !important; }
+.leaflet-top, .leaflet-bottom { z-index: 6 !important; }
+.leaflet-container     { z-index: 0 !important; }
+
 .leaflet-popup-content { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px !important; }
 .leaflet-popup-content-wrapper { border-radius: 10px !important; box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important; }
 
-/* Focus ring */
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
-  outline: 2px solid #4f46e5;
-  outline-offset: 2px;
+  outline: 2px solid #4f46e5; outline-offset: 2px;
 }
 
-/* Animations */
 @keyframes fadeUp   { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeDown { from { opacity:0; transform:translateY(-12px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeIn   { from { opacity:0; } to { opacity:1; } }
 @keyframes spin     { to { transform: rotate(360deg); } }
-@keyframes shimmer  { 0%,100% { opacity:.5; } 50% { opacity:1; } }
-@keyframes pulse    { 0%,100% { transform:scale(1); opacity:1; } 50% { transform:scale(1.15); opacity:.8; } }
+@keyframes pulse    { 0%,100%{transform:scale(1);opacity:1;} 50%{transform:scale(1.3);opacity:0.6;} }
 
 .anim-fade-up   { animation: fadeUp   0.4s cubic-bezier(.22,1,.36,1) both; }
 .anim-fade-down { animation: fadeDown 0.35s cubic-bezier(.22,1,.36,1) both; }

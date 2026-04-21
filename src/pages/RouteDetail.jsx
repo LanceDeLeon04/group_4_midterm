@@ -3,8 +3,7 @@ import { useGetRouteByIdQuery } from '../services/apiSlice';
 import RouteMap from '../components/RouteMap';
 import TransportSegmentCard from '../components/TransportSegmentCard';
 import { segmentRoute } from '../utils/transportSegmenter';
-import { ArrowLeft, MapPin, Clock, Route } from 'lucide-react';
-import { computeFare } from '../utils/fareCalculator';
+import { ArrowLeft } from 'lucide-react';
 
 export default function RouteDetail() {
   const { id } = useParams();
@@ -33,7 +32,6 @@ export default function RouteDetail() {
       <button onClick={()=>navigate(-1)} style={{ display:'flex', alignItems:'center', gap:7, background:'none', border:'none', cursor:'pointer', color:'#4f46e5', fontWeight:700, fontSize:13, marginBottom:20, fontFamily:'inherit', padding:0 }}>
         <ArrowLeft size={15}/> Back
       </button>
-
       <h1 style={{ fontSize:24, fontWeight:900, color:'#0f172a', margin:'0 0 4px', letterSpacing:'-0.03em' }}>
         {route.origin} <span style={{color:'#94a3b8', fontWeight:400}}>→</span> {route.destination}
       </h1>
@@ -49,16 +47,16 @@ export default function RouteDetail() {
       </div>
 
       <div style={{ marginBottom:24 }}>
-        <h2 style={{ fontSize:14, fontWeight:800, color:'#0f172a', marginBottom:12, letterSpacing:'-0.01em' }}>Route Map</h2>
+        <h2 style={{ fontSize:14, fontWeight:800, color:'#0f172a', marginBottom:12 }}>Route Map</h2>
         <RouteMap originCoords={oCoords} destCoords={dCoords} geometry={route.geometry} originName={route.origin} destName={route.destination}/>
       </div>
 
       <div style={{ background:'#fff', borderRadius:18, padding:22, border:'1.5px solid #f0f2f7', boxShadow:'0 2px 20px rgba(0,0,0,0.05)' }}>
-        <h2 style={{ fontSize:14, fontWeight:800, color:'#0f172a', marginBottom:16, letterSpacing:'-0.01em' }}>Transport Segments</h2>
+        <h2 style={{ fontSize:14, fontWeight:800, color:'#0f172a', marginBottom:16 }}>Transport Segments</h2>
         {segments.map((seg,i)=><TransportSegmentCard key={i} segment={seg} index={i} isLast={i===segments.length-1}/>)}
         <div style={{ marginTop:16, paddingTop:14, borderTop:'2px dashed #e2e8f0', display:'flex', justifyContent:'space-between', alignItems:'center' }}>
           <span style={{ fontWeight:700, fontSize:14, color:'#1e293b' }}>Total Estimated Fare</span>
-          <span style={{ fontWeight:900, fontSize:22, color:'#4f46e5', letterSpacing:'-0.02em' }}>₱{totalFare}</span>
+          <span style={{ fontWeight:900, fontSize:22, color:'#4f46e5' }}>₱{totalFare}</span>
         </div>
       </div>
     </div>

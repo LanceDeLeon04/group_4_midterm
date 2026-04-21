@@ -1,15 +1,23 @@
 import { useState } from 'react';
 import { useGetReportsQuery, useCreateReportMutation, useGetStrikesQuery } from '../services/apiSlice';
-import { AlertTriangle, Plus, X, CheckCircle, FileWarning, Radio } from 'lucide-react';
+import { AlertTriangle, Plus, X, CheckCircle, FileWarning, Radio, ChevronRight, MapPin, Calendar, Tag } from 'lucide-react';
 import Pagination from '../components/Pagination';
 
 const CATS = ['overcharging','rude driver','unsafe driving','route disruption','strike'];
-const PER  = 4;
+const PER  = 5;
 
 const ST = {
   active:   { bg:'#fff1f2', border:'#fecdd3', badge:'#ef4444', text:'#9f1239' },
   resolved: { bg:'#f0fdf4', border:'#bbf7d0', badge:'#16a34a', text:'#14532d' },
   open:     { bg:'#fefce8', border:'#fde68a', badge:'#ca8a04', text:'#854d0e' },
+};
+
+const CAT_COLOR = {
+  overcharging:    '#f59e0b',
+  'rude driver':   '#ef4444',
+  'unsafe driving':'#dc2626',
+  'route disruption':'#3b82f6',
+  strike:          '#8b5cf6',
 };
 
 export default function Reports() {
@@ -18,11 +26,19 @@ export default function Reports() {
   const [create, { isLoading: submitting }] = useCreateReportMutation();
   const [page, setPage]     = useState(1);
   const [search, setSearch] = useState('');
+  const [filterCat, setFilterCat] = useState('all');
   const [modal, setModal]   = useState(false);
+  const [viewReport, setViewReport] = useState(null); // report detail modal
   const [form, setForm]     = useState({ category:'overcharging', description:'', location:'' });
   const [ok, setOk]         = useState(false);
 
-  const filtered  = reports.filter(r => r.category.toLowerCase().includes(search.toLowerCase()) || r.location.toLowerCase().includes(search.toLowerCase()) || r.description.toLowerCase().includes(search.toLowerCase()));
+  const filtered = reports.filter(r => {
+    const matchSearch = r.category.toLowerCase().includes(search.toLowerCase())
+      || r.location.toLowerCase().includes(search.toLowerCase())
+      || r.description.toLowerCase().includes(search.toLowerCase());
+    const matchCat = filterCat === 'all' || r.category === filterCat;
+    return matchSearch && matchCat;
+  });
   const totalPgs  = Math.max(1, Math.ceil(filtered.length / PER));
   const paginated = filtered.slice((page-1)*PER, page*PER);
 
@@ -51,11 +67,10 @@ export default function Reports() {
         </div>
       </div>
 
-      {/* Success */}
       {ok && (
-        <div style={{ display:'flex', gap:10, alignItems:'center', background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:12, padding:'13px 16px', marginBottom:18, animation:'fadeUp 0.3s ease' }}>
+        <div style={{ display:'flex', gap:10, alignItems:'center', background:'#f0fdf4', border:'1.5px solid #bbf7d0', borderRadius:12, padding:'13px 16px', marginBottom:18 }}>
           <CheckCircle size={16} color="#16a34a"/>
-          <span style={{ fontWeight:700, color:'#14532d', fontSize:13 }}>Report submitted successfully. Thank you!</span>
+          <span style={{ fontWeight:700, color:'#14532d', fontSize:13 }}>Report submitted! The community thanks you.</span>
         </div>
       )}
 
@@ -63,8 +78,8 @@ export default function Reports() {
       <div style={{ marginBottom:28 }}>
         <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:14 }}>
           <Radio size={15} color="#ef4444"/>
-          <h2 style={{ fontSize:15, fontWeight:800, color:'#0f172a', margin:0, letterSpacing:'-0.01em' }}>Transport Strikes</h2>
-          <span style={{ fontSize:9, fontWeight:800, background:'#fff1f2', color:'#ef4444', padding:'2px 8px', borderRadius:20, letterSpacing:'0.06em' }}>
+          <h2 style={{ fontSize:15, fontWeight:800, color:'#0f172a', margin:0 }}>Transport Strikes</h2>
+          <span style={{ fontSize:9, fontWeight:800, background:'#fff1f2', color:'#ef4444', padding:'2px 8px', borderRadius:20 }}>
             {strikes.filter(s=>s.status==='active').length} ACTIVE
           </span>
         </div>
@@ -76,7 +91,7 @@ export default function Reports() {
               onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', gap:12, marginBottom:7 }}>
                 <span style={{ fontWeight:700, fontSize:14, color:st.text }}>{s.reason}</span>
-                <span style={{ background:st.badge, color:'#fff', fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:20, flexShrink:0, letterSpacing:'0.06em', textTransform:'uppercase' }}>{s.status}</span>
+                <span style={{ background:st.badge, color:'#fff', fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:20, flexShrink:0, textTransform:'uppercase' }}>{s.status}</span>
               </div>
               <div style={{ display:'flex', gap:16, flexWrap:'wrap', fontSize:12, color:'#64748b' }}>
                 <span><strong>Provinces:</strong> {s.affectedProvinces.join(', ')}</span>
@@ -90,19 +105,30 @@ export default function Reports() {
 
       {/* Reports list */}
       <div style={{ background:'#fff', borderRadius:20, padding:24, border:'1.5px solid #f0f2f7', boxShadow:'0 2px 20px rgba(0,0,0,0.05)' }}>
-        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:18, flexWrap:'wrap' }}>
-          <h2 style={{ fontSize:15, fontWeight:800, color:'#0f172a', margin:0, letterSpacing:'-0.01em' }}>Community Reports</h2>
-          <div style={{ display:'flex', gap:10, alignItems:'center' }}>
+        {/* Controls */}
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', gap:12, marginBottom:16, flexWrap:'wrap' }}>
+          <h2 style={{ fontSize:15, fontWeight:800, color:'#0f172a', margin:0 }}>Community Reports</h2>
+          <div style={{ display:'flex', gap:10, alignItems:'center', flexWrap:'wrap' }}>
             <input placeholder="Search reports…" value={search} onChange={e=>{setSearch(e.target.value);setPage(1);}}
-              style={{ padding:'8px 12px', borderRadius:9, border:'1.5px solid #e2e8f0', fontSize:12, fontWeight:500, outline:'none', width:200, color:'#0f172a', fontFamily:'inherit', transition:'border 0.15s' }}
+              style={{ padding:'7px 11px', borderRadius:9, border:'1.5px solid #e2e8f0', fontSize:12, fontWeight:500, outline:'none', width:180, color:'#0f172a', fontFamily:'inherit', transition:'border 0.15s' }}
               onFocus={e=>e.target.style.borderColor='#4f46e5'} onBlur={e=>e.target.style.borderColor='#e2e8f0'}/>
             <button onClick={()=>setModal(true)}
-              style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#ef4444,#dc2626)', color:'#fff', border:'none', borderRadius:9, padding:'9px 15px', fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit', transition:'all 0.2s', boxShadow:'0 3px 12px rgba(239,68,68,0.28)' }}
+              style={{ display:'flex', alignItems:'center', gap:6, background:'linear-gradient(135deg,#ef4444,#dc2626)', color:'#fff', border:'none', borderRadius:9, padding:'9px 15px', fontWeight:700, fontSize:12, cursor:'pointer', fontFamily:'inherit', boxShadow:'0 3px 12px rgba(239,68,68,0.28)', transition:'all 0.2s' }}
               onMouseEnter={e=>{e.currentTarget.style.transform='translateY(-1px)';e.currentTarget.style.boxShadow='0 5px 16px rgba(239,68,68,0.38)';}}
               onMouseLeave={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 3px 12px rgba(239,68,68,0.28)';}}>
               <Plus size={14}/> Submit Report
             </button>
           </div>
+        </div>
+
+        {/* Category filter pills */}
+        <div style={{ display:'flex', gap:6, flexWrap:'wrap', marginBottom:16 }}>
+          {['all',...CATS].map(c=>(
+            <button key={c} onClick={()=>{setFilterCat(c);setPage(1);}}
+              style={{ padding:'4px 10px', fontSize:11, fontWeight:700, borderRadius:20, border:`1.5px solid ${filterCat===c?(CAT_COLOR[c]||'#4f46e5'):'#e2e8f0'}`, background:filterCat===c?((CAT_COLOR[c]||'#4f46e5')+'15'):'#f8fafc', color:filterCat===c?(CAT_COLOR[c]||'#4f46e5'):'#475569', cursor:'pointer', transition:'all 0.13s', textTransform:'capitalize' }}>
+              {c === 'all' ? 'All' : c}
+            </button>
+          ))}
         </div>
 
         {paginated.length===0 && (
@@ -112,18 +138,28 @@ export default function Reports() {
           </div>
         )}
 
+        {/* FIX: Clicking a report opens the detail modal */}
         {paginated.map(r=>{
           const st = ST[r.status]||ST.open;
+          const catColor = CAT_COLOR[r.category] || '#64748b';
           return (
-            <div key={r.id} style={{ background:'#fafafa', borderRadius:12, padding:'13px 15px', marginBottom:9, border:'1.5px solid #f1f5f9', transition:'box-shadow 0.2s' }}
-              onMouseEnter={e=>e.currentTarget.style.boxShadow='0 3px 14px rgba(0,0,0,0.06)'}
-              onMouseLeave={e=>e.currentTarget.style.boxShadow='none'}>
-              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:5 }}>
-                <span style={{ fontSize:10, fontWeight:800, color:'#475569', textTransform:'uppercase', letterSpacing:'0.07em' }}>{r.category}</span>
-                <span style={{ background:st.badge, color:'#fff', fontSize:9, fontWeight:800, padding:'2px 9px', borderRadius:20, letterSpacing:'0.06em', textTransform:'uppercase' }}>{r.status}</span>
+            <div key={r.id}
+              onClick={() => setViewReport(r)}
+              style={{ background:'#fafafa', borderRadius:12, padding:'13px 15px', marginBottom:9, border:'1.5px solid #f1f5f9', transition:'all 0.2s', cursor:'pointer' }}
+              onMouseEnter={e=>{e.currentTarget.style.boxShadow='0 4px 18px rgba(0,0,0,0.07)';e.currentTarget.style.borderColor='#e2e8f0';e.currentTarget.style.background='#fff';}}
+              onMouseLeave={e=>{e.currentTarget.style.boxShadow='none';e.currentTarget.style.borderColor='#f1f5f9';e.currentTarget.style.background='#fafafa';}}>
+              <div style={{ display:'flex', justifyContent:'space-between', marginBottom:6, alignItems:'center' }}>
+                <span style={{ fontSize:10, fontWeight:800, color:catColor, textTransform:'uppercase', letterSpacing:'0.07em', background:catColor+'12', padding:'2px 8px', borderRadius:20 }}>{r.category}</span>
+                <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+                  <span style={{ background:st.badge, color:'#fff', fontSize:9, fontWeight:800, padding:'2px 9px', borderRadius:20, textTransform:'uppercase' }}>{r.status}</span>
+                  <ChevronRight size={13} color="#94a3b8"/>
+                </div>
               </div>
-              <div style={{ fontSize:13, fontWeight:500, color:'#1e293b', marginBottom:5 }}>{r.description}</div>
-              <div style={{ fontSize:11, color:'#94a3b8', fontWeight:500 }}>{r.location} · {r.date}</div>
+              <div style={{ fontSize:13, fontWeight:600, color:'#1e293b', marginBottom:5 }}>{r.description}</div>
+              <div style={{ display:'flex', gap:12, fontSize:11, color:'#94a3b8', fontWeight:500 }}>
+                <span style={{ display:'flex', gap:4, alignItems:'center' }}><MapPin size={10}/>{r.location}</span>
+                <span style={{ display:'flex', gap:4, alignItems:'center' }}><Calendar size={10}/>{r.date}</span>
+              </div>
             </div>
           );
         })}
@@ -131,11 +167,67 @@ export default function Reports() {
         <Pagination currentPage={page} totalPages={totalPgs} onPageChange={setPage}/>
       </div>
 
-      {/* Modal */}
+      {/* ── Report Detail Modal ── */}
+      {viewReport && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.55)', zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', padding:20, backdropFilter:'blur(4px)' }}
+          onClick={e=>{if(e.target===e.currentTarget)setViewReport(null);}}>
+          <div style={{ background:'#fff', borderRadius:20, padding:28, width:'100%', maxWidth:480, boxShadow:'0 32px 64px rgba(0,0,0,0.22)', position:'relative' }}>
+            <button onClick={()=>setViewReport(null)} style={{ position:'absolute', top:16, right:16, background:'#f1f5f9', border:'none', borderRadius:8, width:32, height:32, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#64748b' }}>
+              <X size={14}/>
+            </button>
+
+            {/* Status badge */}
+            {(() => {
+              const st = ST[viewReport.status]||ST.open;
+              const cc = CAT_COLOR[viewReport.category]||'#64748b';
+              return (
+                <>
+                  <div style={{ display:'flex', gap:8, marginBottom:14, alignItems:'center' }}>
+                    <span style={{ fontSize:10, fontWeight:800, background:cc+'15', color:cc, padding:'3px 10px', borderRadius:20, textTransform:'uppercase', letterSpacing:'0.06em' }}>{viewReport.category}</span>
+                    <span style={{ background:st.badge, color:'#fff', fontSize:9, fontWeight:800, padding:'3px 10px', borderRadius:20, textTransform:'uppercase' }}>{viewReport.status}</span>
+                  </div>
+                  <h3 style={{ fontWeight:800, fontSize:18, color:'#0f172a', marginBottom:14, lineHeight:1.3 }}>{viewReport.description}</h3>
+                  <div style={{ background:'#f8fafc', borderRadius:12, padding:'14px 16px', marginBottom:16 }}>
+                    <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+                      <div>
+                        <div style={{ fontSize:9, fontWeight:800, color:'#94a3b8', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:4 }}>Location</div>
+                        <div style={{ display:'flex', gap:5, alignItems:'center', fontSize:13, fontWeight:600, color:'#1e293b' }}><MapPin size={13} color="#4f46e5"/>{viewReport.location}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize:9, fontWeight:800, color:'#94a3b8', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:4 }}>Date Reported</div>
+                        <div style={{ display:'flex', gap:5, alignItems:'center', fontSize:13, fontWeight:600, color:'#1e293b' }}><Calendar size={13} color="#4f46e5"/>{viewReport.date}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize:9, fontWeight:800, color:'#94a3b8', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:4 }}>Report ID</div>
+                        <div style={{ fontSize:13, fontWeight:600, color:'#1e293b' }}>#{viewReport.id}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize:9, fontWeight:800, color:'#94a3b8', letterSpacing:'0.08em', textTransform:'uppercase', marginBottom:4 }}>Status</div>
+                        <div style={{ fontSize:13, fontWeight:700, color:st.badge, textTransform:'capitalize' }}>{viewReport.status}</div>
+                      </div>
+                    </div>
+                  </div>
+                  <div style={{ fontSize:12, color:'#64748b', lineHeight:1.7 }}>
+                    This report has been submitted by a community member and is under review by CalabarzONE moderators. If you witnessed this incident, you can submit a corroborating report.
+                  </div>
+                  <button onClick={()=>setViewReport(null)}
+                    style={{ marginTop:18, width:'100%', padding:'11px', background:'#f1f5f9', border:'none', borderRadius:10, fontWeight:700, fontSize:13, cursor:'pointer', fontFamily:'inherit', color:'#475569', transition:'all 0.15s' }}
+                    onMouseEnter={e=>e.currentTarget.style.background='#e2e8f0'}
+                    onMouseLeave={e=>e.currentTarget.style.background='#f1f5f9'}>
+                    Close
+                  </button>
+                </>
+              );
+            })()}
+          </div>
+        </div>
+      )}
+
+      {/* ── Submit Modal ── */}
       {modal && (
-        <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.55)', zIndex:1000, display:'flex', alignItems:'center', justifyContent:'center', padding:20, backdropFilter:'blur(4px)' }}
+        <div style={{ position:'fixed', inset:0, background:'rgba(15,23,42,0.55)', zIndex:2000, display:'flex', alignItems:'center', justifyContent:'center', padding:20, backdropFilter:'blur(4px)' }}
           onClick={e=>{if(e.target===e.currentTarget)setModal(false);}}>
-          <div style={{ background:'#fff', borderRadius:20, padding:28, width:'100%', maxWidth:430, boxShadow:'0 32px 64px rgba(0,0,0,0.22)', position:'relative', animation:'fadeUp 0.25s ease' }}>
+          <div style={{ background:'#fff', borderRadius:20, padding:28, width:'100%', maxWidth:430, boxShadow:'0 32px 64px rgba(0,0,0,0.22)', position:'relative' }}>
             <button onClick={()=>setModal(false)} style={{ position:'absolute', top:16, right:16, background:'#f1f5f9', border:'none', borderRadius:8, width:32, height:32, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'#64748b' }}>
               <X size={14}/>
             </button>

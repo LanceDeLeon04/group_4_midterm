@@ -7,12 +7,29 @@ export const VEHICLE_RATES = {
   TNVS:     { base: 40, perKm: 3.50, multiplier: 2.5 },
 };
 
-export function computeFare(vehicleType, distanceKm) {
+// Discounts per RA 9994 (Senior/PWD) & student discount
+export const DISCOUNT_RATES = {
+  regular: 0,
+  student: 0.20,  // 20% student discount on PUVs
+  senior:  0.20,  // 20% senior citizen discount (RA 9994)
+  pwd:     0.20,  // 20% PWD discount (RA 10754)
+};
+
+// TNVS / ride-hailing NOT eligible for discounts
+const NO_DISCOUNT_VEHICLES = ['TNVS', 'Walk'];
+
+export function computeFare(vehicleType, distanceKm, discountType = 'regular') {
   const rate = VEHICLE_RATES[vehicleType];
   if (!rate) return 0;
   if (vehicleType === 'Walk') return 0;
-  if (vehicleType === 'Tricycle') return 30;
-  return Math.round((rate.base + distanceKm * rate.perKm) * rate.multiplier);
+  if (vehicleType === 'Tricycle') {
+    const base = 30;
+    const discount = NO_DISCOUNT_VEHICLES.includes(vehicleType) ? 0 : (DISCOUNT_RATES[discountType] || 0);
+    return Math.round(base * (1 - discount));
+  }
+  const raw = Math.round((rate.base + distanceKm * rate.perKm) * rate.multiplier);
+  const discount = NO_DISCOUNT_VEHICLES.includes(vehicleType) ? 0 : (DISCOUNT_RATES[discountType] || 0);
+  return Math.round(raw * (1 - discount));
 }
 
 export function getVehicleColor(vehicleType) {
